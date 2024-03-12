@@ -360,3 +360,24 @@ class ModelPlot(object):
         """
         plot_band = self._select_band(band_index)
         return plot_band.source(**kwargs)
+
+    def single_band_chi2(self, multi_band_list, kwargs_model, kwargs_params):
+
+             multi_band_type = 'multi-linear'
+
+             self._imageModel = class_creator.create_im_sim(multi_band_list, multi_band_type, kwargs_model)
+
+             kwargs_params_copy = copy.deepcopy(kwargs_params)
+
+             kwargs_params_copy.pop("kwargs_tracer_source", None)
+
+             log_l, _ = self._imageModel.likelihood_data_given_model(source_marg=False, linear_prior=None, **kwargs_params_copy)
+
+             n_data = self._imageModel.num_data_evaluate
+
+             if n_data > 0:
+                 chi2 = log_l * 2 / n_data
+             else:
+                 raise ValueError('chi2 not defined (n_data = 0).')
+
+             return chi2
