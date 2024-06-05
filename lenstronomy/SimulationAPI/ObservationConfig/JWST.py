@@ -122,7 +122,7 @@ class JWST(object):
         if self.arm == "short":
             self.camera = {
                 "read_noise": 15.77,
-                "pixel_scale": 0.031,
+                "pixel_scale": 0.063, #0.031,
                 "ccd_gain": 2.05,
             }
         elif self.arm == "long":
