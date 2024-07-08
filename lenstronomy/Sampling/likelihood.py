@@ -269,7 +269,8 @@ class LikelihoodModule(object):
         """
 
         :param kwargs_model: lenstronomy model keyword arguments
-        :param kwargs_imaging: keyword arguments for imaging likelihood
+        :param kwargs_image_sim: keyword arguments for imaging likelihood
+        :param kwargs_image_likelihood: image likelihood dictionary
         :param kwargs_position: keyword arguments for positional likelihood
         :param kwargs_flux: keyword arguments for flux ratio likelihood
         :param kwargs_time_delay: keyword arguments for time delay likelihood
@@ -311,7 +312,9 @@ class LikelihoodModule(object):
         )
         if self._flux_ratio_likelihood is True:
             self.flux_ratio_likelihood = FluxRatioLikelihood(
-                lens_model_class, **kwargs_flux
+                lens_model_class,
+                num_point_sources=len(self.PointSource.point_source_type_list),
+                **kwargs_flux
             )
         if self._kinematic_2D_likelihood is True:
             kwargs_imaging = {**kwargs_image_likelihood, **kwargs_image_sim}
@@ -344,7 +347,7 @@ class LikelihoodModule(object):
                 args, self._lower_limit, self._upper_limit, verbose=verbose
             )
             if bound_hit is True:
-                return -(10**15)
+                return -(10**18)
         return self.log_likelihood(kwargs_return, verbose=verbose)
 
     def log_likelihood(self, kwargs_return, verbose=False):
@@ -394,9 +397,8 @@ class LikelihoodModule(object):
             ra_image_list, dec_image_list = self.PointSource.image_position(
                 kwargs_ps=kwargs_ps, kwargs_lens=kwargs_lens
             )
-            x_pos, y_pos = ra_image_list[0], dec_image_list[0]
             logL_flux_ratios = self.flux_ratio_likelihood.logL(
-                x_pos, y_pos, kwargs_lens, kwargs_special
+                ra_image_list, dec_image_list, kwargs_lens, kwargs_special
             )
             logL += logL_flux_ratios
             if verbose is True:
