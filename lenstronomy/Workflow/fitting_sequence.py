@@ -12,6 +12,7 @@ from lenstronomy.Sampling.Samplers.polychord_sampler import DyPolyChordSampler
 from lenstronomy.Sampling.Samplers.dynesty_sampler import DynestySampler
 from lenstronomy.Sampling.Samplers.nautilus_sampler import NautilusSampler
 from lenstronomy.Sampling.Samplers.cobaya_sampler import CobayaSampler
+from lenstronomy.Sampline.Samplers.blackjax_nested_sampler import BlackJaxNestedSampler
 import numpy as np
 import lenstronomy.Util.analysis_util as analysis_util
 
