@@ -415,3 +415,13 @@ History
 1.12.3 (2024-11-22)
 +++++++++++++++++++
 * more convenient magnitude to amplitude conversion API
+
+1.12.4 (2025-01-28)
++++++++++++++++++++
+* refactoring of ImageModel class
+* renaming of lens models
+
+1.12.5 (2025-02-11)
++++++++++++++++++++
+* bug fix in elliptical shapelets
+* improved point source rendering in plots
