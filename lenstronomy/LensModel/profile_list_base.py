@@ -55,6 +55,8 @@ _SUPPORTED_MODELS = [
     "RADIAL_INTERPOL",
     "LOS",
     "LOS_MINIMAL",
+    "LOS_FLEXION",
+    "LOS_FLEXION_MINIMAL",
     "MULTIPOLE",
     "MULTIPOLE_ELL",
     "MULTI_GAUSSIAN",
@@ -247,9 +249,8 @@ def lens_class(
     """Generate class instance of single lens.
 
     :param lens_type: string, lens model type
-    :param profile_kwargs: dict, keyword arguments used to initialize profile classes If
-        None, then the profile is initialized using default settings
-    :param custom_class: custom class
+    :param profile_kwargs: dict, keyword arguments used to initialize profile classes.
+        If None, then the profile is initialized using default settings
     :return: class instance of the lens model type
     """
     if profile_kwargs is None:
@@ -484,12 +485,25 @@ def lens_class(
         from lenstronomy.LensModel.LineOfSight.LOSModels.los import LOS
 
         return LOS(**profile_kwargs)
+
     elif lens_type == "LOS_MINIMAL":
-        from lenstronomy.LensModel.LineOfSight.LOSModels.los_minimal import (
-            LOSMinimal,
-        )
+        from lenstronomy.LensModel.LineOfSight.LOSModels.los_minimal import LOSMinimal
 
         return LOSMinimal(**profile_kwargs)
+
+    elif lens_type == "LOS_FLEXION":
+        from lenstronomy.LensModel.LineOfSight.LOSModels.los_flexion import (
+            LOSFlexion,
+        )
+
+        return LOSFlexion(**profile_kwargs)
+    elif lens_type == "LOS_FLEXION_MINIMAL":
+        from lenstronomy.LensModel.LineOfSight.LOSModels.los_flexion_minimal import (
+            LOSFlexionMinimal,
+        )
+
+        return LOSFlexionMinimal(**profile_kwargs)
+
     elif lens_type == "MULTIPOLE":
         from lenstronomy.LensModel.Profiles.multipole import Multipole
 
