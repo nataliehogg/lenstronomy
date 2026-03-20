@@ -124,9 +124,20 @@ class ImageLinearFit(ImageModel):
                 self, kwargs_lens, kwargs_ps, kwargs_special=kwargs_special
             )
             d = self.data_response
-            param, cov_param, wls_model = de_lens.get_param_WLS(
-                A.T, 1 / C_D_response, d, inv_bool=inv_bool
+
+            # Check for pixelated source components requiring regularization
+            reg_matrix, reg_strength = self._pixelated_regularization(
+                kwargs_source, kwargs_lens_light, kwargs_ps, kwargs_lens, A
             )
+            if reg_matrix is not None:
+                param, cov_param, wls_model = de_lens.get_param_WLS_regularised(
+                    A.T, 1 / C_D_response, d, reg_matrix, reg_strength,
+                    inv_bool=inv_bool,
+                )
+            else:
+                param, cov_param, wls_model = de_lens.get_param_WLS(
+                    A.T, 1 / C_D_response, d, inv_bool=inv_bool
+                )
             model = self.array_masked2image(wls_model)
             _, _, _, _ = ImageLinearFit.update_linear_kwargs(
                 self, param, kwargs_lens, kwargs_source, kwargs_lens_light, kwargs_ps
@@ -439,6 +450,52 @@ class ImageLinearFit(ImageModel):
         param += self.LensLightModel.linear_param_from_kwargs(kwargs_lens_light)
         param += self.PointSource.linear_param_from_kwargs(kwargs_ps)
         return param
+
+    def _pixelated_regularization(self, kwargs_source, kwargs_lens_light,
+                                     kwargs_ps, kwargs_lens, A):
+        """Build the block-diagonal regularization matrix if PIXELATED source
+        components are present.
+
+        The regularization matrix has the same size as the total number of
+        linear parameters. Non-PIXELATED components get zero regularization.
+
+        :param kwargs_source: source model keyword arguments
+        :param kwargs_lens_light: lens light keyword arguments
+        :param kwargs_ps: point source keyword arguments
+        :param kwargs_lens: lens model keyword arguments
+        :param A: response matrix (n_params x n_data)
+        :return: (reg_matrix, reg_strength) or (None, None) if no
+            PIXELATED components
+        """
+        source_types = self.SourceModel.profile_type_list
+        has_pixelated = any(t == "PIXELATED" for t in source_types)
+        if not has_pixelated:
+            return None, None
+
+        # Total number of linear parameters
+        n_total = A.shape[0]
+
+        # Get linear parameter counts per source component
+        n_source_list = self.SourceModel.num_param_linear_list(kwargs_source)
+        n_lens_light = self.LensLightModel.num_param_linear(kwargs_lens_light)
+
+        # Build block-diagonal regularization matrix
+        reg_matrix = np.zeros((n_total, n_total))
+        reg_strength = 1.0  # default
+
+        offset = 0
+        for i, model_type in enumerate(source_types):
+            n_i = n_source_list[i]
+            if model_type == "PIXELATED":
+                func = self.SourceModel.func_list[i]
+                U = func.regularization_matrix()
+                reg_matrix[offset:offset + n_i, offset:offset + n_i] = U
+                # Get reg_strength from kwargs if provided
+                if kwargs_source is not None and i < len(kwargs_source):
+                    reg_strength = kwargs_source[i].get("reg_strength", 1.0)
+            offset += n_i
+
+        return reg_matrix, reg_strength
 
     def update_pixel_kwargs(self, kwargs_source, kwargs_lens_light):
         """Update kwargs arguments for pixel-based profiles with fixed properties such

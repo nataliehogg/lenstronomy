@@ -96,6 +96,13 @@ class LinearBasis(LightModelBase):
                     raise ValueError(
                         "'{}' model does not support function split".format(model)
                     )
+                elif model == "PIXELATED":
+                    num_param = self.func_list[i].n_pixels
+                    new = {"amp": np.ones(num_param)}
+                    kwargs_new = kwargs_list[i].copy()
+                    kwargs_new.update(new)
+                    response += self.func_list[i].function_split(x, y, **kwargs_new)
+                    n += num_param
                 else:
                     raise ValueError("model type %s not valid!" % model)
         return response, n
@@ -171,6 +178,8 @@ class LinearBasis(LightModelBase):
                 n_list += [
                     num_param
                 ]  # TODO : find a way to make it the number of source pixels
+            elif model == "PIXELATED":
+                n_list += [self.func_list[i].n_pixels]
             else:
                 raise ValueError("model type %s not valid!" % model)
         return n_list
@@ -237,6 +246,10 @@ class LinearBasis(LightModelBase):
                 n_scales = kwargs_list[k]["n_scales"]
                 n_pixels = kwargs_list[k]["n_pixels"]
                 num_param = int(n_scales * n_pixels)
+                kwargs_list[k]["amp"] = param[i : i + num_param]
+                i += num_param
+            elif model == "PIXELATED":
+                num_param = self.func_list[k].n_pixels
                 kwargs_list[k]["amp"] = param[i : i + num_param]
                 i += num_param
             else:

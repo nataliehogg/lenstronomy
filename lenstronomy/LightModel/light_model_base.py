@@ -42,6 +42,7 @@ _MODELS_SUPPORTED = [
     "LINEAR",
     "LINEAR_ELLIPSE",
     "LINE_PROFILE",
+    "PIXELATED",
 ]
 
 
@@ -216,6 +217,10 @@ class LightModelBase(object):
                 from lenstronomy.LightModel.Profiles.lineprofile import LineProfile
 
                 self.func_list.append(LineProfile(**profile_kwargs))
+            elif profile_type == "PIXELATED":
+                from lenstronomy.LightModel.Profiles.pixelated import Pixelated
+
+                self.func_list.append(Pixelated(**profile_kwargs))
             else:
                 raise ValueError(
                     "No light model of type %s found! Supported are the following models: %s"

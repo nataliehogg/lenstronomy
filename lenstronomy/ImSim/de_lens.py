@@ -107,6 +107,46 @@ def marginalization_new(M_inv, d_prior=None):
     return log_det / 2 + m / 2.0 * np.log(np.pi / 2.0) - m * np.log(d_prior)
 
 
+@export
+def get_param_WLS_regularised(A, C_D_inv, d, reg_matrix, reg_strength,
+                              inv_bool=True):
+    """Weighted least squares with regularization.
+
+    Solves: (A^T C_D^{-1} A + reg_strength * reg_matrix) x = A^T C_D^{-1} d
+
+    The regularization matrix typically applies only to a subset of the
+    parameters (e.g., the pixelated source pixels). It should be
+    (Ns x Ns) where Ns is the total number of linear parameters, with
+    zeros in rows/columns corresponding to non-regularised parameters.
+
+    :param A: response matrix Nd x Ns
+    :param C_D_inv: inverse covariance, 1d array of length Nd (diagonal)
+    :param d: data array, 1d of length Nd
+    :param reg_matrix: regularization matrix, Ns x Ns
+    :param reg_strength: float, regularization strength lambda
+    :param inv_bool: bool, whether to return the covariance matrix
+    :return: (param_values, covariance_or_None, model_image)
+    """
+    M = A.T.dot(np.multiply(C_D_inv, A.T).T)
+    M_reg = M + reg_strength * reg_matrix
+    R = A.T.dot(np.multiply(C_D_inv, d))
+
+    if inv_bool:
+        if np.linalg.cond(M_reg) < 5 / sys.float_info.epsilon:
+            M_reg_inv = _stable_inv(M_reg)
+        else:
+            M_reg_inv = np.zeros_like(M_reg)
+        B = M_reg_inv.dot(R)
+    else:
+        if np.linalg.cond(M_reg) < 5 / sys.float_info.epsilon:
+            B = _solve_stable(M_reg, R)
+        else:
+            B = np.zeros(len(A.T))
+        M_reg_inv = None
+    image = A.dot(B)
+    return B, M_reg_inv, image
+
+
 def _stable_inv(m):
     """Stable linear inversion.
 
